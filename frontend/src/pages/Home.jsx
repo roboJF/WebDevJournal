@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api/client.js';
-import EntryForm from '../components/EntryForm.jsx';
 import Window from '../components/Window.jsx';
+import { formatEntryDate, previewEntryContent } from '../utils/entries.js';
 
 export default function Home() {
   const { user, logout } = useAuth();
@@ -10,33 +11,36 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const [creating, setCreating] = useState(false);
-  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setLoadError('');
-    api.entries()
-      .then((data) => { if (!cancelled) setEntries(data.entries); })
-      .catch((err) => { if (!cancelled) setLoadError(err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    api
+      .entries()
+      .then((data) => {
+        if (!cancelled) setEntries(data.entries);
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [user.id, loadAttempt]);
-
-  function onSaved(entry) {
-    setEntries((current) => [entry, ...current].sort((a, b) =>
-      b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt)
-    ));
-    setCreating(false);
-    setNotice('Journal entry saved.');
-  }
 
   return (
     <Window
       title="Muse"
       className="journal-window"
-      actions={<button className="titlebar-btn" onClick={logout}>Log out</button>}
+      actions={
+        <button className="titlebar-btn" onClick={logout}>
+          Log out
+        </button>
+      }
     >
       <section className="journal-content" aria-labelledby="journal-heading">
         <header className="journal-header">
@@ -44,39 +48,40 @@ export default function Home() {
             <h2 id="journal-heading">Journal entries</h2>
             <p className="muted">A space for your thoughts and memories.</p>
           </div>
-          {!creating && (
-            <button type="button" disabled={loading || !!loadError} onClick={() => {
-              setNotice('');
-              setCreating(true);
-            }}>New entry</button>
-          )}
+          <Link className="button-link" to="/entries/new">
+            New entry
+          </Link>
         </header>
-        {notice && <p role="status">{notice}</p>}
-        {creating && <EntryForm onSaved={onSaved} onCancel={() => setCreating(false)} />}
         {loading ? (
-          <p className="loading" role="status">Loading journal entries…</p>
+          <p className="loading" role="status">
+            Loading journal entries…
+          </p>
         ) : loadError ? (
           <div className="alert" role="alert">
             <p>{loadError}</p>
-            <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>Try again</button>
+            <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+              Try again
+            </button>
           </div>
         ) : entries.length ? (
           <div className="journal-list">
             {entries.map((entry) => (
-              <article className="journal-entry" key={entry.id} aria-labelledby={`entry-title-${entry.id}`}>
+              <Link
+                className="journal-entry entry-preview"
+                key={entry.id}
+                to={`/entries/${entry.id}`}
+              >
                 <header>
-                  <h3 id={`entry-title-${entry.id}`}>{entry.title}</h3>
+                  <h3>{entry.title}</h3>
                   <time className="muted" dateTime={entry.date}>
-                    {new Date(`${entry.date}T00:00:00Z`).toLocaleDateString(undefined, {
-                      dateStyle: 'long', timeZone: 'UTC',
-                    })}
+                    {formatEntryDate(entry.date)}
                   </time>
                 </header>
-                <p className="entry-content">{entry.content}</p>
-              </article>
+                <p className="entry-excerpt">{previewEntryContent(entry.content)}</p>
+              </Link>
             ))}
           </div>
-        ) : !creating && (
+        ) : (
           <div className="journal-empty">
             <h3>No journal entries yet</h3>
             <p className="muted">Select New entry to write your first journal entry.</p>

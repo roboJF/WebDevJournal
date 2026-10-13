@@ -22,7 +22,11 @@ await once(server, 'listening');
 const base = `http://127.0.0.1:${server.address().port}/api/entries`;
 const owner = '111111111111111111111111';
 const otherUser = '222222222222222222222222';
-const validEntry = { title: 'A good day', date: '2026-10-13', content: 'Some thoughts.\nAnother line.' };
+const validEntry = {
+  title: 'A good day',
+  date: '2026-10-13',
+  content: 'Some thoughts.\nAnother line.',
+};
 let stored;
 
 beforeEach(() => {
@@ -37,10 +41,18 @@ beforeEach(() => {
   mock.method(Entry, 'find', (query) => ({
     sort: async (order) => {
       assert.deepEqual(order, { date: -1, createdAt: -1 });
-      return stored.filter((entry) => entry.user.toString() === query.user)
+      return stored
+        .filter((entry) => entry.user.toString() === query.user)
         .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
     },
   }));
+  mock.method(
+    Entry,
+    'findOne',
+    async (query) =>
+      stored.find((entry) => entry.id === query._id && entry.user.toString() === query.user) ||
+      null,
+  );
 });
 
 afterEach(() => mock.restoreAll());
@@ -57,10 +69,37 @@ function request({ method = 'GET', body, user = owner, path = '' } = {}) {
   });
 }
 
-test('both listing and creating entries require login', async () => {
+test('listing, reading, and creating entries require login', async () => {
   assert.equal((await request({ user: null })).status, 401);
+  assert.equal((await request({ user: null, path: `/${owner}` })).status, 401);
   assert.equal((await request({ method: 'POST', user: null, body: validEntry })).status, 401);
   assert.equal(stored.length, 0);
+});
+
+test('reads a saved entry by ID with its complete content', async () => {
+  const content = '  A long journal entry.\n\n'.repeat(30);
+  const created = await request({ method: 'POST', body: { ...validEntry, content } });
+  const saved = (await created.json()).entry;
+  const response = await request({ path: `/${saved.id}` });
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).entry, saved);
+});
+
+test('another user’s entry and a missing entry return the same 404 response', async () => {
+  const created = await request({ method: 'POST', body: validEntry });
+  const saved = (await created.json()).entry;
+  const otherResponse = await request({ user: otherUser, path: `/${saved.id}` });
+  const missingResponse = await request({ path: '/333333333333333333333333' });
+  assert.equal(otherResponse.status, 404);
+  assert.equal(missingResponse.status, 404);
+  assert.deepEqual(await otherResponse.json(), await missingResponse.json());
+});
+
+test('malformed entry IDs return 404 without querying MongoDB', async () => {
+  const response = await request({ path: '/not-an-entry-id' });
+  assert.equal(response.status, 404);
+  assert.equal((await response.json()).message, 'Journal entry not found.');
+  assert.equal(Entry.findOne.mock.callCount(), 0);
 });
 
 test('creates an entry for the authenticated user and preserves the date and content', async () => {
@@ -83,12 +122,19 @@ test('creates an entry for the authenticated user and preserves the date and con
 
 test('listing returns only the current user’s entries, newest journal date first', async () => {
   await request({ method: 'POST', body: { ...validEntry, date: '2026-10-10' } });
-  await request({ method: 'POST', user: otherUser, body: { ...validEntry, title: 'Private to another user' } });
+  await request({
+    method: 'POST',
+    user: otherUser,
+    body: { ...validEntry, title: 'Private to another user' },
+  });
   await request({ method: 'POST', body: validEntry });
   const response = await request();
   assert.equal(response.status, 200);
   const { entries } = await response.json();
-  assert.deepEqual(entries.map((entry) => entry.date), ['2026-10-13', '2026-10-10']);
+  assert.deepEqual(
+    entries.map((entry) => entry.date),
+    ['2026-10-13', '2026-10-10'],
+  );
   const otherResponse = await request({ user: otherUser });
   const otherEntries = (await otherResponse.json()).entries;
   assert.equal(otherEntries.length, 1);
@@ -97,10 +143,18 @@ test('listing returns only the current user’s entries, newest journal date fir
 
 test('invalid fields produce validation errors without saving anything', async () => {
   for (const [field, value] of [
-    ['title', '   '], ['title', 'x'.repeat(201)], ['title', '🌻'.repeat(101)], ['title', {}],
-    ['date', '2026-02-30'], ['date', '2026-13-01'], ['date', '0000-01-01'],
-    ['date', '2026-10-13T12:00:00Z'], ['date', ''],
-    ['content', ' \n '], ['content', []], ['content', 'x'.repeat(100001)],
+    ['title', '   '],
+    ['title', 'x'.repeat(201)],
+    ['title', '🌻'.repeat(101)],
+    ['title', {}],
+    ['date', '2026-02-30'],
+    ['date', '2026-13-01'],
+    ['date', '0000-01-01'],
+    ['date', '2026-10-13T12:00:00Z'],
+    ['date', ''],
+    ['content', ' \n '],
+    ['content', []],
+    ['content', 'x'.repeat(100001)],
     ['content', '🌻'.repeat(50001)],
   ]) {
     const response = await request({ method: 'POST', body: { ...validEntry, [field]: value } });
@@ -109,19 +163,29 @@ test('invalid fields produce validation errors without saving anything', async (
   }
   const missingFields = await request({ method: 'POST', body: {} });
   assert.equal(missingFields.status, 400);
-  assert.deepEqual(Object.keys((await missingFields.json()).errors).sort(), ['content', 'date', 'title']);
+  assert.deepEqual(Object.keys((await missingFields.json()).errors).sort(), [
+    'content',
+    'date',
+    'title',
+  ]);
   assert.equal(stored.length, 0);
 });
 
 test('accepts leap days and Unicode content larger than the authentication body limit', async () => {
   const content = '🌻'.repeat(15000);
-  const response = await request({ method: 'POST', body: { ...validEntry, date: '2028-02-29', content } });
+  const response = await request({
+    method: 'POST',
+    body: { ...validEntry, date: '2028-02-29', content },
+  });
   assert.equal(response.status, 201);
   assert.equal((await response.json()).entry.content, content);
 });
 
 test('oversized requests receive a readable 413 response', async () => {
-  const response = await request({ method: 'POST', body: { ...validEntry, content: 'x'.repeat(1100000) } });
+  const response = await request({
+    method: 'POST',
+    body: { ...validEntry, content: 'x'.repeat(1100000) },
+  });
   assert.equal(response.status, 413);
   assert.match((await response.json()).message, /too large/i);
   assert.equal(stored.length, 0);

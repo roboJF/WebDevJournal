@@ -39,14 +39,36 @@ export default function Login() {
   return (
     <Window title="Log in to Muse">
       <form onSubmit={onSubmit} noValidate>
-        {formError && <p className="alert" role="alert">{formError}</p>}
-        <Field label="Username" name="username" autoComplete="username" autoFocus
-               value={form.username} onChange={update} error={fieldErrors.username} />
-        <Field label="Password" name="password" type="password" autoComplete="current-password"
-               value={form.password} onChange={update} error={fieldErrors.password} />
-        <button type="submit" disabled={submitting}>{submitting ? 'Logging in…' : 'Log in'}</button>
+        {formError && (
+          <p className="alert" role="alert">
+            {formError}
+          </p>
+        )}
+        <Field
+          label="Username"
+          name="username"
+          autoComplete="username"
+          autoFocus
+          value={form.username}
+          onChange={update}
+          error={fieldErrors.username}
+        />
+        <Field
+          label="Password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          value={form.password}
+          onChange={update}
+          error={fieldErrors.password}
+        />
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Logging in…' : 'Log in'}
+        </button>
       </form>
-      <p className="switch">New here? <Link to="/register">Create an account</Link></p>
+      <p className="switch">
+        New here? <Link to="/register">Create an account</Link>
+      </p>
     </Window>
   );
 }

@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     // Never returned from queries unless explicitly selected with .select('+passwordHash')
     passwordHash: { type: String, required: true, select: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.set('toJSON', {

@@ -13,7 +13,7 @@ const entrySchema = new mongoose.Schema(
       validate: (value) => value.trim().length > 0,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 entrySchema.index({ user: 1, date: -1, createdAt: -1 });

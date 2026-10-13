@@ -1,7 +1,8 @@
 // In dev we default to the local API. In a production build an empty
 // VITE_API_URL means "same origin", for setups with a reverse proxy.
-const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:5000' : ''))
-  .replace(/\/$/, '');
+const BASE = (
+  import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:5000' : '')
+).replace(/\/$/, '');
 
 export class ApiError extends Error {
   constructor(status, message, fieldErrors = {}) {
@@ -32,10 +33,13 @@ async function request(path, { method = 'GET', body } = {}) {
 }
 
 export const api = {
-  register: (username, password) => request('/auth/register', { method: 'POST', body: { username, password } }),
-  login: (username, password) => request('/auth/login', { method: 'POST', body: { username, password } }),
+  register: (username, password) =>
+    request('/auth/register', { method: 'POST', body: { username, password } }),
+  login: (username, password) =>
+    request('/auth/login', { method: 'POST', body: { username, password } }),
   logout: () => request('/auth/logout', { method: 'POST' }),
   me: () => request('/auth/me'),
   entries: () => request('/entries'),
+  entry: (id) => request(`/entries/${encodeURIComponent(id)}`),
   createEntry: (entry) => request('/entries', { method: 'POST', body: entry }),
 };

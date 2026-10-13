@@ -18,15 +18,18 @@ const credentialLimiter = rateLimit({
 
 const registerRules = [
   body('username')
-    .isString().withMessage('Enter a username.')
+    .isString()
+    .withMessage('Enter a username.')
     .bail()
     .trim()
     .matches(/^[A-Za-z0-9_]{3,30}$/)
     .withMessage('Use 3-30 letters, numbers, or underscores.'),
   body('password')
-    .isString().withMessage('Enter a password.')
+    .isString()
+    .withMessage('Enter a password.')
     .bail()
-    .isLength({ min: 8 }).withMessage('Use at least 8 characters.')
+    .isLength({ min: 8 })
+    .withMessage('Use at least 8 characters.')
     // bcrypt silently ignores anything past 72 bytes
     .custom((v) => Buffer.byteLength(v, 'utf8') <= 72)
     .withMessage('Use 72 bytes or fewer (about 72 characters).'),

@@ -40,7 +40,7 @@ export async function login(req, res, next) {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ usernameLower: username.toLowerCase() }).select(
-      '+passwordHash'
+      '+passwordHash',
     );
 
     const valid = await bcrypt.compare(password, user ? user.passwordHash : DUMMY_HASH);

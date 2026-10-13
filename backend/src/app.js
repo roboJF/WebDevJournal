@@ -22,7 +22,7 @@ app.use(
       return cb(new Error('Not allowed by CORS'));
     },
     credentials: true,
-  })
+  }),
 );
 // Only application/json bodies are parsed, which also blocks plain cross-site form posts
 app.use('/api/entries', express.json({ limit: '1mb' }));

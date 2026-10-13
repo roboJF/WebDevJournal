@@ -42,18 +42,47 @@ export default function Register() {
   return (
     <Window title="Create your Muse account">
       <form onSubmit={onSubmit} noValidate>
-        {formError && <p className="alert" role="alert">{formError}</p>}
-        <Field label="Username" name="username" autoComplete="username" autoFocus
-               hint="3-30 letters, numbers, or underscores."
-               value={form.username} onChange={update} error={fieldErrors.username} />
-        <Field label="Password" name="password" type="password" autoComplete="new-password"
-               hint="At least 8 characters."
-               value={form.password} onChange={update} error={fieldErrors.password} />
-        <Field label="Confirm password" name="confirm" type="password" autoComplete="new-password"
-               value={form.confirm} onChange={update} error={fieldErrors.confirm} />
-        <button type="submit" disabled={submitting}>{submitting ? 'Creating account…' : 'Create account'}</button>
+        {formError && (
+          <p className="alert" role="alert">
+            {formError}
+          </p>
+        )}
+        <Field
+          label="Username"
+          name="username"
+          autoComplete="username"
+          autoFocus
+          hint="3-30 letters, numbers, or underscores."
+          value={form.username}
+          onChange={update}
+          error={fieldErrors.username}
+        />
+        <Field
+          label="Password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          hint="At least 8 characters."
+          value={form.password}
+          onChange={update}
+          error={fieldErrors.password}
+        />
+        <Field
+          label="Confirm password"
+          name="confirm"
+          type="password"
+          autoComplete="new-password"
+          value={form.confirm}
+          onChange={update}
+          error={fieldErrors.confirm}
+        />
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Creating account…' : 'Create account'}
+        </button>
       </form>
-      <p className="switch">Already have an account? <Link to="/login">Log in</Link></p>
+      <p className="switch">
+        Already have an account? <Link to="/login">Log in</Link>
+      </p>
     </Window>
   );
 }
