@@ -1,6 +1,7 @@
 # Muse (MERN)
 
-Baseline: account creation + login. Frontend and backend are fully separate apps
+Current features: account creation, login, and creating/viewing journal entries.
+Frontend and backend are fully separate apps
 with their own `package.json`, dependencies, and `.env`. Nothing is shared.
 
 ```
@@ -80,8 +81,17 @@ The app reads everything from env vars, so moving to a host is just setting them
 | POST | `/api/auth/logout` | | `200`, cookie cleared |
 | GET | `/api/auth/me` | | `200 { user }` or `401` |
 | GET | `/api/health` | | `200 { status: "ok" }` |
+| GET | `/api/entries` | | `200 { entries }`, current user's entries |
+| POST | `/api/entries` | `{ title, date, content }` | `201 { entry }` |
 
 Errors look like `{ message, errors?: { field: message } }`.
+
+Entries require login. Dates use `YYYY-MM-DD`; titles are limited to 200 characters
+and content to 100,000 characters. Entry encryption is not implemented yet;
+titles and content are currently stored as plain text. Editing and deletion are not available.
+
+Run backend route tests with `cd backend` then `npm test`. Tests mock database operations
+and do not connect to your MongoDB instance.
 
 ## Security notes
 

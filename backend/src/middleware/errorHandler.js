@@ -6,6 +6,9 @@ export function notFound(_req, res) {
 
 // eslint-disable-next-line no-unused-vars
 export function errorHandler(err, _req, res, _next) {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ message: 'This request is too large. Please shorten it and try again.' });
+  }
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({ message: 'Request body is not valid JSON.' });
   }

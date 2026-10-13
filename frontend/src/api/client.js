@@ -36,4 +36,6 @@ export const api = {
   login: (username, password) => request('/auth/login', { method: 'POST', body: { username, password } }),
   logout: () => request('/auth/logout', { method: 'POST' }),
   me: () => request('/auth/me'),
+  entries: () => request('/entries'),
+  createEntry: (entry) => request('/entries', { method: 'POST', body: entry }),
 };

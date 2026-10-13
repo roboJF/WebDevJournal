@@ -87,7 +87,7 @@ body {
 .field { margin-bottom: 14px; }
 .field label { display: block; margin-bottom: 4px; font-weight: 700; }
 
-input {
+input, textarea {
   width: 100%;
   padding: 6px 8px;
   font: inherit;
@@ -98,7 +98,9 @@ input {
   border-radius: 0;
 }
 
-input[aria-invalid="true"] { border-color: var(--danger); }
+textarea { resize: vertical; }
+
+:is(input, textarea)[aria-invalid="true"] { border-color: var(--danger); }
 
 button {
   padding: 6px 18px;
@@ -119,7 +121,7 @@ form button[type="submit"] { width: 100%; padding: 8px 18px; }
 
 a { color: var(--link); }
 
-:is(input, button, a):focus-visible {
+:is(input, textarea, button, a):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
@@ -164,7 +166,14 @@ a { color: var(--link); }
   flex: 1;
 }
 
-.journal-header { margin-bottom: 20px; }
+.journal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
 .journal-header h2 {
   margin: 0 0 4px;
   font-size: 20px;
@@ -197,3 +206,27 @@ a { color: var(--link); }
   color: var(--muted);
   font-size: 12px;
 }
+
+.entry-composer {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 2px solid;
+  border-color: var(--face-edge) var(--face-shadow) var(--face-shadow) var(--face-edge);
+}
+.entry-composer h3 { margin: 0 0 16px; font-size: 16px; }
+.entry-composer fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.entry-form-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.entry-form-actions button[type="submit"] { width: auto; padding: 6px 18px; }
+
+.journal-list { display: grid; gap: 16px; }
+.journal-entry {
+  min-width: 0;
+  padding: 20px;
+  background: var(--field);
+  border: 2px solid;
+  border-color: var(--face-shadow) var(--face-edge) var(--face-edge) var(--face-shadow);
+  overflow-wrap: anywhere;
+}
+.journal-entry h3 { margin: 0 0 4px; font-size: 16px; }
+.journal-entry header { margin-bottom: 16px; }
+.journal-entry .entry-content { margin: 0; white-space: pre-wrap; }
