@@ -70,13 +70,18 @@ The app reads everything from env vars, so moving to a host is just setting them
 1. **Database:** create a MongoDB Atlas cluster, allow your API host's IP, and use its URI as `MONGODB_URI`.
 2. **Backend** (Render, Railway, Fly, etc.): root directory `backend`, build `npm install`, start `npm start`.
    Set `NODE_ENV=production`, `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_ORIGIN=https://<your-frontend>`.
-3. **Frontend** (Vercel, Netlify, Cloudflare Pages, etc.): root directory `frontend`, build `npm run build`,
-   output `dist`. Set `VITE_API_URL=https://<your-api>`. SPA rewrite files for Netlify (`public/_redirects`)
-   and Vercel (`vercel.json`) are included.
+3. **Vercel frontend:** root directory `frontend`, build `npm run build`, output `dist`.
+   Set the Production `VITE_API_URL` variable to an empty value (no quotes or whitespace), then rebuild.
+   `frontend/vercel.json` forwards `/api/*` to `https://muse-p0p6.onrender.com/api/*` before the SPA fallback.
+   Update that destination if the Render service URL changes. API responses are not cached.
+   For other frontend hosts without an API proxy, set `VITE_API_URL=https://<your-api>`.
+   Netlify's SPA fallback is included in `public/_redirects` but does not proxy API requests.
 4. **Cookies:** login uses an httpOnly cookie, so the cookie settings must match your domain layout:
-   - _Different sites_ (e.g. `app.vercel.app` + `api.onrender.com`): the production defaults work
-     (`SameSite=None; Secure`). Note that Safari and some privacy browsers block third-party cookies,
-     which can break login in this setup.
+   - _Vercel API proxy_ (recommended for this deployment): set Render's `COOKIE_SAMESITE=lax`,
+     `COOKIE_SECURE=true`, and `CLIENT_ORIGIN=https://muse-rho-sepia.vercel.app`. Leave `COOKIE_DOMAIN`
+     unset. The browser receives its cookie from the frontend domain, avoiding third-party cookies.
+   - _Direct API requests across different sites_ (e.g. `app.vercel.app` + `api.onrender.com`): require
+     `SameSite=None; Secure`, but Safari and some privacy browsers still block these third-party cookies.
    - _Same parent domain_ (e.g. `example.com` + `api.example.com`): **recommended.** Set
      `COOKIE_SAMESITE=lax` and optionally `COOKIE_DOMAIN=.example.com`.
 
