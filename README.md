@@ -115,6 +115,8 @@ Cancel returns to the entry without saving changes. Only the owner can update an
 Delete is available in each preview's three-dot menu and beside Edit on the full entry page.
 A confirmation dialog names the entry and offers Cancel or Delete entry. Deletion permanently
 removes the entry; there is no trash, recovery period, or restore feature. Only the owner can delete it.
+After a successful deletion, an Entry deleted popup appears in the same dialog. Select OK to dismiss
+it and update the list, or return to the list if the entry was deleted from its full page.
 
 Run backend route tests with `cd backend` then `npm test`. Tests mock database operations
 and do not connect to your MongoDB instance.

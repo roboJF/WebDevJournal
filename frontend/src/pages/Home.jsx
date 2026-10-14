@@ -14,7 +14,6 @@ export default function Home() {
   const [loadError, setLoadError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [notice, setNotice] = useState('');
   const newEntryRef = useRef(null);
 
   useEffect(() => {
@@ -57,7 +56,6 @@ export default function Home() {
             New entry
           </Link>
         </header>
-        {notice && <p role="status">{notice}</p>}
         {loading ? (
           <p className="loading" role="status">
             Loading journal entries…
@@ -85,7 +83,6 @@ export default function Home() {
                 <EntryMenu
                   entry={entry}
                   onDelete={(selected, returnFocus) => {
-                    setNotice('');
                     setDeleteTarget({ entry: selected, returnFocus });
                   }}
                 />
@@ -110,7 +107,6 @@ export default function Home() {
           onDeleted={(id) => {
             setEntries((current) => current.filter((entry) => entry.id !== id));
             setDeleteTarget(null);
-            setNotice('Journal entry deleted.');
             newEntryRef.current?.focus();
           }}
         />
