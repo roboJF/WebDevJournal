@@ -419,6 +419,10 @@ a {
   margin: 0 0 4px;
   font-size: 20px;
 }
+.entry-detail .entry-modified {
+  margin: 6px 0 0;
+  font-size: 12px;
+}
 
 .journal-actions {
   display: flex;

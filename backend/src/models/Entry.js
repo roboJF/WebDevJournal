@@ -25,6 +25,7 @@ entrySchema.set('toJSON', {
       date: ret.date,
       content: ret.content,
       createdAt: ret.createdAt,
+      updatedAt: ret.updatedAt,
     };
   },
 });

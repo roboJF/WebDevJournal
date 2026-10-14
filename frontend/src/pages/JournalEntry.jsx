@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import Window from '../components/Window.jsx';
 import EntryForm from '../components/EntryForm.jsx';
 import DeleteEntryDialog from '../components/DeleteEntryDialog.jsx';
-import { formatEntryDate } from '../utils/entries.js';
+import { formatEntryDate, formatEntryTimestamp } from '../utils/entries.js';
 
 export default function JournalEntry({ editing = false }) {
   const { entryId } = useParams();
@@ -101,6 +101,12 @@ export default function JournalEntry({ editing = false }) {
                 <time className="muted" dateTime={entry.date}>
                   {formatEntryDate(entry.date)}
                 </time>
+                {entry.updatedAt && (
+                  <p className="entry-modified muted">
+                    Last modified:{' '}
+                    <time dateTime={entry.updatedAt}>{formatEntryTimestamp(entry.updatedAt)}</time>
+                  </p>
+                )}
               </header>
               <p className="entry-content">{entry.content}</p>
             </article>

@@ -33,7 +33,8 @@ beforeEach(() => {
   stored = [];
   mock.method(User, 'findById', async (id) => ({ id }));
   mock.method(Entry, 'create', async (data) => {
-    const entry = new Entry({ ...data, createdAt: new Date() });
+    const timestamp = new Date();
+    const entry = new Entry({ ...data, createdAt: timestamp, updatedAt: timestamp });
     await entry.validate();
     stored.push(entry);
     return entry;
@@ -139,6 +140,7 @@ test('creates an entry for the authenticated user and preserves the date and con
   assert.equal(entry.content, content);
   assert.ok(entry.id);
   assert.ok(entry.createdAt);
+  assert.equal(entry.updatedAt, entry.createdAt);
   assert.equal(stored[0].user.toString(), owner);
   assert.equal(entry.user, undefined);
   assert.equal(entry.__v, undefined);
@@ -229,12 +231,16 @@ test('updates the owner’s entry while preserving its ID, owner, and creation d
       user: otherUser,
       _id: otherUser,
       createdAt: '2000-01-01T00:00:00.000Z',
+      updatedAt: '2000-01-01T00:00:00.000Z',
     },
   });
   assert.equal(response.status, 200);
   const { entry } = await response.json();
   assert.equal(entry.id, original.id);
   assert.equal(entry.createdAt, original.createdAt);
+  assert.equal(entry.updatedAt, stored[0].updatedAt.toISOString());
+  assert.ok(Date.parse(entry.updatedAt) >= Date.parse(original.updatedAt));
+  assert.notEqual(entry.updatedAt, '2000-01-01T00:00:00.000Z');
   assert.equal(entry.title, 'An updated day');
   assert.equal(entry.date, '2026-10-14');
   assert.equal(entry.content, content);
@@ -380,6 +386,24 @@ test('a failed deletion returns an error and leaves the entry intact', async () 
   assert.match((await response.json()).message, /try again/i);
   assert.equal(stored.length, 1);
   assert.equal(stored[0].id, original.id);
+});
+
+test('listing and reading expose the stored last-modified timestamp without changing it', async () => {
+  const entry = new Entry({
+    ...validEntry,
+    user: owner,
+    createdAt: '2026-10-13T12:00:00.000Z',
+    updatedAt: '2026-10-14T16:30:00.000Z',
+  });
+  stored.push(entry);
+  const response = await request({ path: `/${entry.id}` });
+  assert.equal(response.status, 200);
+  const result = (await response.json()).entry;
+  assert.equal(result.createdAt, '2026-10-13T12:00:00.000Z');
+  assert.equal(result.updatedAt, '2026-10-14T16:30:00.000Z');
+  const list = (await (await request()).json()).entries;
+  assert.equal(list[0].updatedAt, result.updatedAt);
+  assert.equal(stored[0].updatedAt.toISOString(), result.updatedAt);
 });
 
 test('partial updates are not available', async () => {

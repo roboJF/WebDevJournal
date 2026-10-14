@@ -107,6 +107,8 @@ and content to 100,000 characters. Entry encryption is not implemented yet;
 titles and content are currently stored as plain text.
 The home page shows clickable previews with each entry's title, date, and a short excerpt.
 Full entries open at `/entries/:entryId`, which also supports direct links and refreshing.
+Full entry pages show Last modified with the saved modification date and time in the viewer's local
+timezone. The API returns `createdAt` and `updatedAt`; MongoDB timestamps update automatically on save.
 New entry opens the creation form at `/entries/new`. Saving opens the saved entry;
 Cancel returns to the list without saving.
 The three-dot menu on each preview and the Edit button on the full entry open `/entries/:entryId/edit`.
