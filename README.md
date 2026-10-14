@@ -30,6 +30,12 @@ npm run dev
 
 Open http://localhost:5173.
 
+The title bar on every page includes a theme button that cycles System → Light → Dark → System.
+The button shows the current preference. It defaults to System,
+which follows the device's preference, including changes while the app is open. An explicit choice
+is saved in this browser and applies across pages and visits. Cycling back to System restores automatic
+theme selection. If browser storage is unavailable, the choice lasts until the page is reloaded.
+
 ## Code formatting
 
 Prettier is a development dependency in each app and is installed by running `npm install`

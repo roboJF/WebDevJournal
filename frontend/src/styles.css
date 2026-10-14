@@ -1,5 +1,5 @@
 /* Early-web "application window" look: bevelled controls, title bars, Tahoma/Verdana.
-   All colors are tokens so light/dark (and a future user toggle) are one place. */
+   All colors are tokens so light/dark themes are defined in one place. */
 :root {
   --desktop: #7d9bc4;
   --face: #eceef3;
@@ -18,23 +18,21 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --desktop: #1c2a40;
-    --face: #2b2f3a;
-    --face-edge: #4a5062;
-    --face-shadow: #101218;
-    --ink: #e8eaf1;
-    --muted: #a3a9ba;
-    --title-from: #0f2547;
-    --title-to: #2d5594;
-    --field: #1a1d25;
-    --link: #8db4f5;
-    --danger: #ff9aa0;
-    --danger-bg: #3a2023;
-    --focus: #ffc933;
-    color-scheme: dark;
-  }
+:root[data-theme='dark'] {
+  --desktop: #1c2a40;
+  --face: #2b2f3a;
+  --face-edge: #4a5062;
+  --face-shadow: #101218;
+  --ink: #e8eaf1;
+  --muted: #a3a9ba;
+  --title-from: #0f2547;
+  --title-to: #2d5594;
+  --field: #1a1d25;
+  --link: #8db4f5;
+  --danger: #ff9aa0;
+  --danger-bg: #3a2023;
+  --focus: #ffc933;
+  color-scheme: dark;
 }
 
 * {
@@ -89,6 +87,17 @@ body {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.2px;
+}
+
+.titlebar-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.theme-button {
+  min-width: 76px;
 }
 
 .window-body {
