@@ -7,8 +7,13 @@ function today() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
-export default function EntryForm({ onSaved, onCancel }) {
-  const [form, setForm] = useState(() => ({ title: '', date: today(), content: '' }));
+export default function EntryForm({ initialEntry, onSaved, onCancel }) {
+  const editing = !!initialEntry;
+  const [form, setForm] = useState(() =>
+    initialEntry
+      ? { title: initialEntry.title, date: initialEntry.date, content: initialEntry.content }
+      : { title: '', date: today(), content: '' },
+  );
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -23,7 +28,9 @@ export default function EntryForm({ onSaved, onCancel }) {
     setFormError('');
     setSubmitting(true);
     try {
-      const { entry } = await api.createEntry(form);
+      const { entry } = editing
+        ? await api.updateEntry(initialEntry.id, form)
+        : await api.createEntry(form);
       onSaved(entry);
     } catch (err) {
       setFieldErrors(err.fieldErrors || {});
@@ -34,8 +41,8 @@ export default function EntryForm({ onSaved, onCancel }) {
   }
 
   return (
-    <section className="entry-composer" aria-labelledby="new-entry-heading">
-      <h2 id="new-entry-heading">New journal entry</h2>
+    <section className="entry-composer" aria-labelledby="entry-form-heading">
+      <h2 id="entry-form-heading">{editing ? 'Edit journal entry' : 'New journal entry'}</h2>
       <form onSubmit={onSubmit}>
         {formError && (
           <p className="alert" role="alert">
@@ -76,7 +83,9 @@ export default function EntryForm({ onSaved, onCancel }) {
             required
           />
           <div className="entry-form-actions">
-            <button type="submit">{submitting ? 'Saving…' : 'Save entry'}</button>
+            <button type="submit">
+              {submitting ? 'Saving…' : editing ? 'Save changes' : 'Save entry'}
+            </button>
             <button type="button" onClick={onCancel}>
               Cancel
             </button>

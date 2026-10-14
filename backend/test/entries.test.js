@@ -53,6 +53,18 @@ beforeEach(() => {
       stored.find((entry) => entry.id === query._id && entry.user.toString() === query.user) ||
       null,
   );
+  mock.method(Entry, 'findOneAndUpdate', async (query, update, options) => {
+    assert.deepEqual(options, { new: true, runValidators: true });
+    const index = stored.findIndex(
+      (entry) => entry.id === query._id && entry.user.toString() === query.user,
+    );
+    if (index === -1) return null;
+    const updated = new Entry({ ...stored[index].toObject(), ...update.$set });
+    await updated.validate();
+    updated.updatedAt = new Date();
+    stored[index] = updated;
+    return updated;
+  });
 });
 
 afterEach(() => mock.restoreAll());
@@ -69,10 +81,14 @@ function request({ method = 'GET', body, user = owner, path = '' } = {}) {
   });
 }
 
-test('listing, reading, and creating entries require login', async () => {
+test('listing, reading, creating, and updating entries require login', async () => {
   assert.equal((await request({ user: null })).status, 401);
   assert.equal((await request({ user: null, path: `/${owner}` })).status, 401);
   assert.equal((await request({ method: 'POST', user: null, body: validEntry })).status, 401);
+  assert.equal(
+    (await request({ method: 'PUT', user: null, path: `/${owner}`, body: validEntry })).status,
+    401,
+  );
   assert.equal(stored.length, 0);
 });
 
@@ -191,10 +207,106 @@ test('oversized requests receive a readable 413 response', async () => {
   assert.equal(stored.length, 0);
 });
 
-test('editing and deleting endpoints are not available', async () => {
+test('updates the owner’s entry while preserving its ID, owner, and creation date', async () => {
+  const created = await request({ method: 'POST', body: validEntry });
+  const original = (await created.json()).entry;
+  const content = '  Updated thoughts.\n\nAnother paragraph.  ';
+  const response = await request({
+    method: 'PUT',
+    path: `/${original.id}`,
+    body: {
+      title: '  An updated day  ',
+      date: '2026-10-14',
+      content,
+      user: otherUser,
+      _id: otherUser,
+      createdAt: '2000-01-01T00:00:00.000Z',
+    },
+  });
+  assert.equal(response.status, 200);
+  const { entry } = await response.json();
+  assert.equal(entry.id, original.id);
+  assert.equal(entry.createdAt, original.createdAt);
+  assert.equal(entry.title, 'An updated day');
+  assert.equal(entry.date, '2026-10-14');
+  assert.equal(entry.content, content);
+  assert.equal(stored.length, 1);
+  assert.equal(stored[0].user.toString(), owner);
+  assert.deepEqual((await (await request({ path: `/${original.id}` })).json()).entry, entry);
+});
+
+test('updating another user’s entry or a missing entry returns 404 without changing data', async () => {
+  const created = await request({ method: 'POST', body: validEntry });
+  const original = (await created.json()).entry;
+  const body = { ...validEntry, title: 'Unauthorized change', user: otherUser };
+  const otherResponse = await request({
+    method: 'PUT',
+    user: otherUser,
+    path: `/${original.id}`,
+    body,
+  });
+  const missingResponse = await request({ method: 'PUT', path: '/333333333333333333333333', body });
+  assert.equal(otherResponse.status, 404);
+  assert.equal(missingResponse.status, 404);
+  assert.deepEqual(await otherResponse.json(), await missingResponse.json());
+  assert.equal(stored[0].title, original.title);
+  assert.equal(stored.length, 1);
+});
+
+test('invalid edits produce field errors and leave the saved entry untouched', async () => {
+  const created = await request({ method: 'POST', body: validEntry });
+  const original = (await created.json()).entry;
+  for (const [field, value] of [
+    ['title', '   '],
+    ['title', 'x'.repeat(201)],
+    ['title', '🌻'.repeat(101)],
+    ['date', '2026-02-30'],
+    ['date', '0000-01-01'],
+    ['date', '2026-10-13T12:00:00Z'],
+    ['content', ' \n '],
+    ['content', {}],
+    ['content', '🌻'.repeat(50001)],
+  ]) {
+    const response = await request({
+      method: 'PUT',
+      path: `/${original.id}`,
+      body: { ...validEntry, [field]: value },
+    });
+    assert.equal(response.status, 400);
+    assert.ok((await response.json()).errors[field]);
+  }
+  const incomplete = await request({
+    method: 'PUT',
+    path: `/${original.id}`,
+    body: { title: 'Missing fields' },
+  });
+  assert.equal(incomplete.status, 400);
+  assert.deepEqual((await (await request({ path: `/${original.id}` })).json()).entry, original);
+  assert.equal(Entry.findOneAndUpdate.mock.callCount(), 0);
+});
+
+test('malformed IDs cannot update entries', async () => {
+  const response = await request({ method: 'PUT', path: '/not-an-entry-id', body: validEntry });
+  assert.equal(response.status, 404);
+  assert.equal(Entry.findOneAndUpdate.mock.callCount(), 0);
+});
+
+test('the entry list reflects an edited title, preview content, and journal date order', async () => {
+  const first = await request({ method: 'POST', body: { ...validEntry, date: '2026-10-10' } });
+  const original = (await first.json()).entry;
+  await request({ method: 'POST', body: validEntry });
+  const updated = { title: 'New title', date: '2026-10-15', content: 'New preview content' };
+  const response = await request({ method: 'PUT', path: `/${original.id}`, body: updated });
+  assert.equal(response.status, 200);
+  const { entries } = await (await request()).json();
+  assert.equal(entries[0].id, original.id);
+  for (const field of ['title', 'date', 'content']) assert.equal(entries[0][field], updated[field]);
+});
+
+test('partial updates and deleting endpoints are not available', async () => {
   const created = await request({ method: 'POST', body: validEntry });
   const { entry } = await created.json();
-  for (const method of ['PATCH', 'PUT', 'DELETE']) {
+  for (const method of ['PATCH', 'DELETE']) {
     const response = await request({ method, path: `/${entry.id}`, body: { title: 'Changed' } });
     assert.equal(response.status, 404);
   }

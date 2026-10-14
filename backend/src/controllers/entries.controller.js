@@ -36,3 +36,25 @@ export async function getEntry(req, res, next) {
     return next(err);
   }
 }
+
+export async function updateEntry(req, res, next) {
+  try {
+    const { entryId } = req.params;
+    if (!mongoose.isObjectIdOrHexString(entryId)) {
+      return res.status(404).json({ message: 'Journal entry not found.' });
+    }
+
+    const { title, date, content } = req.body;
+    const entry = await Entry.findOneAndUpdate(
+      { _id: entryId, user: req.user.id },
+      { $set: { title, date, content } },
+      { new: true, runValidators: true },
+    );
+    if (!entry) {
+      return res.status(404).json({ message: 'Journal entry not found.' });
+    }
+    return res.json({ entry });
+  } catch (err) {
+    return next(err);
+  }
+}

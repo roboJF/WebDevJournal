@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api/client.js';
 import Window from '../components/Window.jsx';
+import EntryMenu from '../components/EntryMenu.jsx';
 import { formatEntryDate, previewEntryContent } from '../utils/entries.js';
 
 export default function Home() {
@@ -66,19 +67,18 @@ export default function Home() {
         ) : entries.length ? (
           <div className="journal-list">
             {entries.map((entry) => (
-              <Link
-                className="journal-entry entry-preview"
-                key={entry.id}
-                to={`/entries/${entry.id}`}
-              >
-                <header>
-                  <h3>{entry.title}</h3>
-                  <time className="muted" dateTime={entry.date}>
-                    {formatEntryDate(entry.date)}
-                  </time>
-                </header>
-                <p className="entry-excerpt">{previewEntryContent(entry.content)}</p>
-              </Link>
+              <article className="journal-entry entry-card" key={entry.id}>
+                <Link className="entry-preview" to={`/entries/${entry.id}`}>
+                  <header>
+                    <h3>{entry.title}</h3>
+                    <time className="muted" dateTime={entry.date}>
+                      {formatEntryDate(entry.date)}
+                    </time>
+                  </header>
+                  <p className="entry-excerpt">{previewEntryContent(entry.content)}</p>
+                </Link>
+                <EntryMenu entry={entry} />
+              </article>
             ))}
           </div>
         ) : (

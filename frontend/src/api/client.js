@@ -42,4 +42,6 @@ export const api = {
   entries: () => request('/entries'),
   entry: (id) => request(`/entries/${encodeURIComponent(id)}`),
   createEntry: (entry) => request('/entries', { method: 'POST', body: entry }),
+  updateEntry: (id, entry) =>
+    request(`/entries/${encodeURIComponent(id)}`, { method: 'PUT', body: entry }),
 };

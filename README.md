@@ -1,6 +1,6 @@
 # Muse (MERN)
 
-Current features: account creation, login, and creating/viewing journal entries.
+Current features: account creation, login, and creating/viewing/editing journal entries.
 Frontend and backend are fully separate apps
 with their own `package.json`, dependencies, and `.env`. Only formatting configuration is shared at the project root.
 
@@ -87,26 +87,30 @@ The app reads everything from env vars, so moving to a host is just setting them
 
 ## API
 
-| Method | Path                    | Body                       | Result                                         |
-| ------ | ----------------------- | -------------------------- | ---------------------------------------------- |
-| POST   | `/api/auth/register`    | `{ username, password }`   | `201 { user }` + auth cookie                   |
-| POST   | `/api/auth/login`       | `{ username, password }`   | `200 { user }` + auth cookie                   |
-| POST   | `/api/auth/logout`      |                            | `200`, cookie cleared                          |
-| GET    | `/api/auth/me`          |                            | `200 { user }` or `401`                        |
-| GET    | `/api/health`           |                            | `200 { status: "ok" }`                         |
-| GET    | `/api/entries`          |                            | `200 { entries }`, current user's entries      |
-| GET    | `/api/entries/:entryId` |                            | `200 { entry }`, current user's entry or `404` |
-| POST   | `/api/entries`          | `{ title, date, content }` | `201 { entry }`                                |
+| Method | Path                    | Body                       | Result                                                 |
+| ------ | ----------------------- | -------------------------- | ------------------------------------------------------ |
+| POST   | `/api/auth/register`    | `{ username, password }`   | `201 { user }` + auth cookie                           |
+| POST   | `/api/auth/login`       | `{ username, password }`   | `200 { user }` + auth cookie                           |
+| POST   | `/api/auth/logout`      |                            | `200`, cookie cleared                                  |
+| GET    | `/api/auth/me`          |                            | `200 { user }` or `401`                                |
+| GET    | `/api/health`           |                            | `200 { status: "ok" }`                                 |
+| GET    | `/api/entries`          |                            | `200 { entries }`, current user's entries              |
+| GET    | `/api/entries/:entryId` |                            | `200 { entry }`, current user's entry or `404`         |
+| POST   | `/api/entries`          | `{ title, date, content }` | `201 { entry }`                                        |
+| PUT    | `/api/entries/:entryId` | `{ title, date, content }` | `200 { entry }`, current user's updated entry or `404` |
 
 Errors look like `{ message, errors?: { field: message } }`.
 
 Entries require login. Dates use `YYYY-MM-DD`; titles are limited to 200 characters
 and content to 100,000 characters. Entry encryption is not implemented yet;
-titles and content are currently stored as plain text. Editing and deletion are not available.
+titles and content are currently stored as plain text. Deletion is not available.
 The home page shows clickable previews with each entry's title, date, and a short excerpt.
 Full entries open at `/entries/:entryId`, which also supports direct links and refreshing.
 New entry opens the creation form at `/entries/new`. Saving opens the saved entry;
 Cancel returns to the list without saving.
+The three-dot menu on each preview and the Edit button on the full entry open `/entries/:entryId/edit`.
+The edit form starts with the saved title, date, and content. Saving opens the updated entry;
+Cancel returns to the entry without saving changes. Only the owner can update an entry.
 
 Run backend route tests with `cd backend` then `npm test`. Tests mock database operations
 and do not connect to your MongoDB instance.

@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { listEntries, createEntry, getEntry } from '../controllers/entries.controller.js';
+import {
+  listEntries,
+  createEntry,
+  getEntry,
+  updateEntry,
+} from '../controllers/entries.controller.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
@@ -41,5 +46,6 @@ const entryRules = [
 router.get('/', listEntries);
 router.get('/:entryId', getEntry);
 router.post('/', entryRules, validate, createEntry);
+router.put('/:entryId', entryRules, validate, updateEntry);
 
 export default router;

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import Window from '../components/Window.jsx';
+import EntryForm from '../components/EntryForm.jsx';
 import { formatEntryDate } from '../utils/entries.js';
 
-export default function JournalEntry() {
+export default function JournalEntry({ editing = false }) {
   const { entryId } = useParams();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [entry, setEntry] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,7 +34,7 @@ export default function JournalEntry() {
     return () => {
       cancelled = true;
     };
-  }, [entryId, user.id, loadAttempt]);
+  }, [entryId, user.id, loadAttempt, editing]);
 
   return (
     <Window
@@ -44,9 +46,19 @@ export default function JournalEntry() {
         </button>
       }
     >
-      <section className="journal-content" aria-label="Journal entry">
+      <section
+        className="journal-content"
+        aria-label={editing ? 'Edit journal entry' : 'Journal entry'}
+      >
         <header className="journal-header">
-          <Link to="/">← Back to entries</Link>
+          <Link to={editing ? `/entries/${entryId}` : '/'}>
+            {editing ? '← Back to entry' : '← Back to entries'}
+          </Link>
+          {!editing && !loading && !error && entry && (
+            <Link className="button-link" to={`/entries/${entry.id}/edit`}>
+              Edit
+            </Link>
+          )}
         </header>
         {loading ? (
           <p className="loading" role="status">
@@ -61,6 +73,13 @@ export default function JournalEntry() {
               </button>
             )}
           </div>
+        ) : editing && entry ? (
+          <EntryForm
+            key={entry.id}
+            initialEntry={entry}
+            onSaved={(saved) => navigate(`/entries/${saved.id}`, { replace: true })}
+            onCancel={() => navigate(`/entries/${entry.id}`)}
+          />
         ) : (
           entry && (
             <article className="journal-entry entry-detail" aria-labelledby="entry-heading">

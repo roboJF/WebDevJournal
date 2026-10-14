@@ -26,6 +26,14 @@ export default function App() {
         }
       />
       <Route
+        path="/entries/:entryId/edit"
+        element={
+          <ProtectedRoute>
+            <JournalEntry editing />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/entries/:entryId"
         element={
           <ProtectedRoute>
