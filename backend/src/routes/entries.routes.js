@@ -5,6 +5,7 @@ import {
   createEntry,
   getEntry,
   updateEntry,
+  deleteEntry,
 } from '../controllers/entries.controller.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -47,5 +48,6 @@ router.get('/', listEntries);
 router.get('/:entryId', getEntry);
 router.post('/', entryRules, validate, createEntry);
 router.put('/:entryId', entryRules, validate, updateEntry);
+router.delete('/:entryId', deleteEntry);
 
 export default router;

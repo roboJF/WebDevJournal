@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api/client.js';
 import Window from '../components/Window.jsx';
 import EntryMenu from '../components/EntryMenu.jsx';
+import DeleteEntryDialog from '../components/DeleteEntryDialog.jsx';
 import { formatEntryDate, previewEntryContent } from '../utils/entries.js';
 
 export default function Home() {
@@ -12,6 +13,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [notice, setNotice] = useState('');
+  const newEntryRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,10 +53,11 @@ export default function Home() {
             <h2 id="journal-heading">Journal entries</h2>
             <p className="muted">A space for your thoughts and memories.</p>
           </div>
-          <Link className="button-link" to="/entries/new">
+          <Link className="button-link" to="/entries/new" ref={newEntryRef}>
             New entry
           </Link>
         </header>
+        {notice && <p role="status">{notice}</p>}
         {loading ? (
           <p className="loading" role="status">
             Loading journal entries…
@@ -77,7 +82,13 @@ export default function Home() {
                   </header>
                   <p className="entry-excerpt">{previewEntryContent(entry.content)}</p>
                 </Link>
-                <EntryMenu entry={entry} />
+                <EntryMenu
+                  entry={entry}
+                  onDelete={(selected, returnFocus) => {
+                    setNotice('');
+                    setDeleteTarget({ entry: selected, returnFocus });
+                  }}
+                />
               </article>
             ))}
           </div>
@@ -91,6 +102,19 @@ export default function Home() {
       <footer className="journal-footer">
         Signed in as <strong>{user.username}</strong>.
       </footer>
+      {deleteTarget && (
+        <DeleteEntryDialog
+          entry={deleteTarget.entry}
+          returnFocus={deleteTarget.returnFocus}
+          onCancel={() => setDeleteTarget(null)}
+          onDeleted={(id) => {
+            setEntries((current) => current.filter((entry) => entry.id !== id));
+            setDeleteTarget(null);
+            setNotice('Journal entry deleted.');
+            newEntryRef.current?.focus();
+          }}
+        />
+      )}
     </Window>
   );
 }

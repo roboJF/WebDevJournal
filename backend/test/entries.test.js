@@ -65,6 +65,13 @@ beforeEach(() => {
     stored[index] = updated;
     return updated;
   });
+  mock.method(Entry, 'findOneAndDelete', async (query) => {
+    const index = stored.findIndex(
+      (entry) => entry.id === query._id && entry.user.toString() === query.user,
+    );
+    if (index === -1) return null;
+    return stored.splice(index, 1)[0];
+  });
 });
 
 afterEach(() => mock.restoreAll());
@@ -81,7 +88,7 @@ function request({ method = 'GET', body, user = owner, path = '' } = {}) {
   });
 }
 
-test('listing, reading, creating, and updating entries require login', async () => {
+test('all entry operations require login', async () => {
   assert.equal((await request({ user: null })).status, 401);
   assert.equal((await request({ user: null, path: `/${owner}` })).status, 401);
   assert.equal((await request({ method: 'POST', user: null, body: validEntry })).status, 401);
@@ -90,6 +97,7 @@ test('listing, reading, creating, and updating entries require login', async () 
     401,
   );
   assert.equal(stored.length, 0);
+  assert.equal((await request({ method: 'DELETE', user: null, path: `/${owner}` })).status, 401);
 });
 
 test('reads a saved entry by ID with its complete content', async () => {
@@ -303,10 +311,81 @@ test('the entry list reflects an edited title, preview content, and journal date
   for (const field of ['title', 'date', 'content']) assert.equal(entries[0][field], updated[field]);
 });
 
-test('partial updates and deleting endpoints are not available', async () => {
+test('permanently deletes only the selected entry and removes it from reading and listing', async () => {
+  const created = await request({ method: 'POST', body: validEntry });
+  const entry = (await created.json()).entry;
+  const otherCreated = await request({
+    method: 'POST',
+    body: { ...validEntry, title: 'Keep this entry' },
+  });
+  const kept = (await otherCreated.json()).entry;
+  const response = await request({ method: 'DELETE', path: `/${entry.id}` });
+  assert.equal(response.status, 204);
+  assert.equal(await response.text(), '');
+  assert.equal(stored.length, 1);
+  assert.equal(stored[0].id, kept.id);
+  assert.equal((await request({ path: `/${entry.id}` })).status, 404);
+  assert.equal(
+    (await request({ method: 'PUT', path: `/${entry.id}`, body: validEntry })).status,
+    404,
+  );
+  assert.equal((await request({ method: 'DELETE', path: `/${entry.id}` })).status, 404);
+  assert.deepEqual(
+    (await (await request()).json()).entries.map((item) => item.id),
+    [kept.id],
+  );
+});
+
+test('logged-out users cannot delete an existing entry', async () => {
+  const created = await request({ method: 'POST', body: validEntry });
+  const entry = (await created.json()).entry;
+  const response = await request({ method: 'DELETE', user: null, path: `/${entry.id}` });
+  assert.equal(response.status, 401);
+  assert.equal(Entry.findOneAndDelete.mock.callCount(), 0);
+  assert.equal(stored.length, 1);
+});
+
+test('another user’s entry and a missing entry return identical deletion errors', async () => {
+  const created = await request({ method: 'POST', body: validEntry });
+  const original = (await created.json()).entry;
+  const otherResponse = await request({
+    method: 'DELETE',
+    user: otherUser,
+    path: `/${original.id}`,
+    body: { user: owner },
+  });
+  const missingResponse = await request({ method: 'DELETE', path: '/333333333333333333333333' });
+  assert.equal(otherResponse.status, 404);
+  assert.equal(missingResponse.status, 404);
+  assert.deepEqual(await otherResponse.json(), await missingResponse.json());
+  assert.equal(stored.length, 1);
+  assert.equal(stored[0].id, original.id);
+});
+
+test('malformed entry IDs cannot delete data', async () => {
+  const response = await request({ method: 'DELETE', path: '/not-an-entry-id' });
+  assert.equal(response.status, 404);
+  assert.equal(Entry.findOneAndDelete.mock.callCount(), 0);
+});
+
+test('a failed deletion returns an error and leaves the entry intact', async () => {
+  const created = await request({ method: 'POST', body: validEntry });
+  const original = (await created.json()).entry;
+  Entry.findOneAndDelete.mock.mockImplementation(async () => {
+    throw new Error('Database unavailable');
+  });
+  mock.method(console, 'error', () => {});
+  const response = await request({ method: 'DELETE', path: `/${original.id}` });
+  assert.equal(response.status, 500);
+  assert.match((await response.json()).message, /try again/i);
+  assert.equal(stored.length, 1);
+  assert.equal(stored[0].id, original.id);
+});
+
+test('partial updates are not available', async () => {
   const created = await request({ method: 'POST', body: validEntry });
   const { entry } = await created.json();
-  for (const method of ['PATCH', 'DELETE']) {
+  for (const method of ['PATCH']) {
     const response = await request({ method, path: `/${entry.id}`, body: { title: 'Changed' } });
     assert.equal(response.status, 404);
   }

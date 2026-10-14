@@ -1,6 +1,6 @@
 # Muse (MERN)
 
-Current features: account creation, login, and creating/viewing/editing journal entries.
+Current features: account creation, login, and creating/viewing/editing/deleting journal entries.
 Frontend and backend are fully separate apps
 with their own `package.json`, dependencies, and `.env`. Only formatting configuration is shared at the project root.
 
@@ -98,12 +98,13 @@ The app reads everything from env vars, so moving to a host is just setting them
 | GET    | `/api/entries/:entryId` |                            | `200 { entry }`, current user's entry or `404`         |
 | POST   | `/api/entries`          | `{ title, date, content }` | `201 { entry }`                                        |
 | PUT    | `/api/entries/:entryId` | `{ title, date, content }` | `200 { entry }`, current user's updated entry or `404` |
+| DELETE | `/api/entries/:entryId` |                            | `204`, permanently deleted, or `404`                   |
 
 Errors look like `{ message, errors?: { field: message } }`.
 
 Entries require login. Dates use `YYYY-MM-DD`; titles are limited to 200 characters
 and content to 100,000 characters. Entry encryption is not implemented yet;
-titles and content are currently stored as plain text. Deletion is not available.
+titles and content are currently stored as plain text.
 The home page shows clickable previews with each entry's title, date, and a short excerpt.
 Full entries open at `/entries/:entryId`, which also supports direct links and refreshing.
 New entry opens the creation form at `/entries/new`. Saving opens the saved entry;
@@ -111,6 +112,9 @@ Cancel returns to the list without saving.
 The three-dot menu on each preview and the Edit button on the full entry open `/entries/:entryId/edit`.
 The edit form starts with the saved title, date, and content. Saving opens the updated entry;
 Cancel returns to the entry without saving changes. Only the owner can update an entry.
+Delete is available in each preview's three-dot menu and beside Edit on the full entry page.
+A confirmation dialog names the entry and offers Cancel or Delete entry. Deletion permanently
+removes the entry; there is no trash, recovery period, or restore feature. Only the owner can delete it.
 
 Run backend route tests with `cd backend` then `npm test`. Tests mock database operations
 and do not connect to your MongoDB instance.

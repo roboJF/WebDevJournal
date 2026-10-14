@@ -392,14 +392,22 @@ a {
   border-color: var(--face-edge) var(--face-shadow) var(--face-shadow) var(--face-edge);
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.25);
 }
-.entry-menu-dropdown a {
+.entry-menu-dropdown :is(a, button) {
   display: block;
+  width: 100%;
   padding: 8px 12px;
   color: var(--ink);
+  background: transparent;
+  border: 0;
+  font-weight: 400;
+  text-align: left;
   text-decoration: none;
 }
-.entry-menu-dropdown a:hover,
-.entry-menu-dropdown a:focus-visible {
+.entry-menu-dropdown .danger-text {
+  color: var(--danger);
+}
+.entry-menu-dropdown :is(a, button):hover,
+.entry-menu-dropdown :is(a, button):focus-visible {
   background: var(--title-from);
   color: var(--title-ink);
 }
@@ -410,4 +418,37 @@ a {
 .entry-detail h2 {
   margin: 0 0 4px;
   font-size: 20px;
+}
+
+.journal-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.danger-button {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+.delete-dialog {
+  width: calc(100% - 32px);
+  max-width: 420px;
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow: auto;
+  color: var(--ink);
+  background: var(--face);
+  border: 2px solid;
+  border-color: var(--face-edge) var(--face-shadow) var(--face-shadow) var(--face-edge);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+}
+.delete-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.delete-dialog .titlebar h2 {
+  margin: 0;
+  font-size: 14px;
+}
+.delete-dialog strong {
+  overflow-wrap: anywhere;
 }

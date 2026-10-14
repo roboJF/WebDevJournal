@@ -1,16 +1,18 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-export default function EntryMenu({ entry }) {
+export default function EntryMenu({ entry, onDelete }) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const containerRef = useRef(null);
   const buttonRef = useRef(null);
   const editRef = useRef(null);
+  const deleteRef = useRef(null);
+  const initialFocusRef = useRef(0);
 
   useEffect(() => {
     if (!open) return;
-    editRef.current?.focus();
+    [editRef.current, deleteRef.current][initialFocusRef.current]?.focus();
     const closeOutside = (event) => {
       if (!containerRef.current?.contains(event.target)) setOpen(false);
     };
@@ -30,8 +32,18 @@ export default function EntryMenu({ entry }) {
       buttonRef.current?.focus();
     } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
-      setOpen(true);
-      editRef.current?.focus();
+      if (!open) {
+        initialFocusRef.current = event.key === 'ArrowUp' ? 1 : 0;
+        setOpen(true);
+      } else {
+        const items = [editRef.current, deleteRef.current];
+        const index = items.indexOf(document.activeElement);
+        const direction = event.key === 'ArrowDown' ? 1 : -1;
+        items[(index + direction + items.length) % items.length]?.focus();
+      }
+    } else if (open && (event.key === 'Home' || event.key === 'End')) {
+      event.preventDefault();
+      (event.key === 'Home' ? editRef : deleteRef).current?.focus();
     }
   }
 
@@ -45,7 +57,10 @@ export default function EntryMenu({ entry }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          initialFocusRef.current = 0;
+          setOpen((current) => !current);
+        }}
       >
         <svg
           width="24"
@@ -71,6 +86,19 @@ export default function EntryMenu({ entry }) {
           >
             Edit
           </Link>
+          <button
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
+            ref={deleteRef}
+            className="danger-text"
+            onClick={() => {
+              setOpen(false);
+              onDelete(entry, buttonRef.current);
+            }}
+          >
+            Delete
+          </button>
         </div>
       )}
     </div>

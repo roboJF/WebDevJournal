@@ -58,3 +58,20 @@ export async function updateEntry(req, res, next) {
     return next(err);
   }
 }
+
+export async function deleteEntry(req, res, next) {
+  try {
+    const { entryId } = req.params;
+    if (!mongoose.isObjectIdOrHexString(entryId)) {
+      return res.status(404).json({ message: 'Journal entry not found.' });
+    }
+
+    const entry = await Entry.findOneAndDelete({ _id: entryId, user: req.user.id });
+    if (!entry) {
+      return res.status(404).json({ message: 'Journal entry not found.' });
+    }
+    return res.status(204).end();
+  } catch (err) {
+    return next(err);
+  }
+}

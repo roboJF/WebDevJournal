@@ -4,6 +4,7 @@ import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import Window from '../components/Window.jsx';
 import EntryForm from '../components/EntryForm.jsx';
+import DeleteEntryDialog from '../components/DeleteEntryDialog.jsx';
 import { formatEntryDate } from '../utils/entries.js';
 
 export default function JournalEntry({ editing = false }) {
@@ -14,6 +15,7 @@ export default function JournalEntry({ editing = false }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,9 +57,20 @@ export default function JournalEntry({ editing = false }) {
             {editing ? '← Back to entry' : '← Back to entries'}
           </Link>
           {!editing && !loading && !error && entry && (
-            <Link className="button-link" to={`/entries/${entry.id}/edit`}>
-              Edit
-            </Link>
+            <div className="journal-actions">
+              <Link className="button-link" to={`/entries/${entry.id}/edit`}>
+                Edit
+              </Link>
+              <button
+                type="button"
+                className="danger-button"
+                onClick={(event) => {
+                  setDeleteTarget({ entry, returnFocus: event.currentTarget });
+                }}
+              >
+                Delete
+              </button>
+            </div>
           )}
         </header>
         {loading ? (
@@ -97,6 +110,14 @@ export default function JournalEntry({ editing = false }) {
       <footer className="journal-footer">
         Signed in as <strong>{user.username}</strong>.
       </footer>
+      {deleteTarget && (
+        <DeleteEntryDialog
+          entry={deleteTarget.entry}
+          returnFocus={deleteTarget.returnFocus}
+          onCancel={() => setDeleteTarget(null)}
+          onDeleted={() => navigate('/', { replace: true })}
+        />
+      )}
     </Window>
   );
 }

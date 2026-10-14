@@ -44,4 +44,5 @@ export const api = {
   createEntry: (entry) => request('/entries', { method: 'POST', body: entry }),
   updateEntry: (id, entry) =>
     request(`/entries/${encodeURIComponent(id)}`, { method: 'PUT', body: entry }),
+  deleteEntry: (id) => request(`/entries/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };
