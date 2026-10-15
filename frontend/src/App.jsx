@@ -1,4 +1,12 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  createRoutesFromElements,
+  Navigate,
+  Outlet,
+  Route,
+  RouterProvider,
+} from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Home from './pages/Home.jsx';
 import JournalEntry from './pages/JournalEntry.jsx';
@@ -6,9 +14,16 @@ import NewEntry from './pages/NewEntry.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 
-export default function App() {
-  return (
-    <Routes>
+// A data router provides navigation blocking, including browser Back/Forward.
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route
+      element={
+        <AuthProvider>
+          <Outlet />
+        </AuthProvider>
+      }
+    >
       <Route
         path="/"
         element={
@@ -44,6 +59,10 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
+    </Route>,
+  ),
+);
+
+export default function App() {
+  return <RouterProvider router={router} />;
 }

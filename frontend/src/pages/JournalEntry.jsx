@@ -6,6 +6,7 @@ import Window from '../components/Window.jsx';
 import EntryForm from '../components/EntryForm.jsx';
 import DeleteEntryDialog from '../components/DeleteEntryDialog.jsx';
 import { formatEntryDate, formatEntryTimestamp } from '../utils/entries.js';
+import useUnsavedChanges from '../hooks/useUnsavedChanges.jsx';
 
 export default function JournalEntry({ editing = false }) {
   const { entryId } = useParams();
@@ -16,6 +17,7 @@ export default function JournalEntry({ editing = false }) {
   const [error, setError] = useState(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const unsaved = useUnsavedChanges();
 
   useEffect(() => {
     let cancelled = false;
@@ -43,7 +45,7 @@ export default function JournalEntry({ editing = false }) {
       title="Muse"
       className="journal-window"
       actions={
-        <button className="titlebar-btn" onClick={logout}>
+        <button className="titlebar-btn" onClick={() => unsaved.requestLeave(logout)}>
           Log out
         </button>
       }
@@ -90,7 +92,11 @@ export default function JournalEntry({ editing = false }) {
           <EntryForm
             key={entry.id}
             initialEntry={entry}
-            onSaved={(saved) => navigate(`/entries/${saved.id}`, { replace: true })}
+            onDirtyChange={unsaved.setDirty}
+            onSaved={(saved) => {
+              unsaved.markClean();
+              navigate(`/entries/${saved.id}`, { replace: true });
+            }}
             onCancel={() => navigate(`/entries/${entry.id}`)}
           />
         ) : (
@@ -116,6 +122,7 @@ export default function JournalEntry({ editing = false }) {
       <footer className="journal-footer">
         Signed in as <strong>{user.username}</strong>.
       </footer>
+      {unsaved.confirmation}
       {deleteTarget && (
         <DeleteEntryDialog
           entry={deleteTarget.entry}

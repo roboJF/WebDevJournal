@@ -120,6 +120,10 @@ Cancel returns to the list without saving.
 The three-dot menu on each preview and the Edit button on the full entry open `/entries/:entryId/edit`.
 The edit form starts with the saved title, date, and content. Saving opens the updated entry;
 Cancel returns to the entry without saving changes. Only the owner can update an entry.
+Leaving a new or edited entry with unsaved title, date, or content changes opens a confirmation
+dialog with Stay and Leave without saving. This covers Cancel, back links, browser navigation
+within the app, and logging out. Refreshing, closing the tab, or leaving the site uses the browser's
+standard unsaved-changes warning when supported. Unchanged forms and successful saves do not warn.
 Delete is available in each preview's three-dot menu and beside Edit on the full entry page.
 A confirmation dialog names the entry and offers Cancel or Delete entry. Deletion permanently
 removes the entry; there is no trash, recovery period, or restore feature. Only the owner can delete it.

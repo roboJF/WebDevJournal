@@ -443,7 +443,7 @@ a {
   color: var(--danger);
   background: var(--danger-bg);
 }
-.delete-dialog {
+:is(.delete-dialog, .unsaved-dialog) {
   width: calc(100% - 32px);
   max-width: 420px;
   max-height: calc(100dvh - 32px);
@@ -455,10 +455,10 @@ a {
   border-color: var(--face-edge) var(--face-shadow) var(--face-shadow) var(--face-edge);
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
 }
-.delete-dialog::backdrop {
+:is(.delete-dialog, .unsaved-dialog)::backdrop {
   background: rgba(0, 0, 0, 0.55);
 }
-.delete-dialog .titlebar h2 {
+:is(.delete-dialog, .unsaved-dialog) .titlebar h2 {
   margin: 0;
   font-size: 14px;
 }
