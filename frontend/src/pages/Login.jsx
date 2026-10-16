@@ -15,7 +15,7 @@ export default function Login() {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (!loading && user) return <Navigate to="/" replace />;
+  if (!loading && user) return <Navigate to={redirectTo} replace />;
 
   const update = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
