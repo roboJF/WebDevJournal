@@ -158,6 +158,20 @@ are gitignored. To run a single file, use `npm test -- tests/unsaved-changes.spe
 For an already installed Chrome or Edge, optionally set `PLAYWRIGHT_CHANNEL=chrome` or `msedge`
 in your shell before running tests. The default uses Playwright's downloaded Chromium.
 
+### GitHub Actions
+
+The `.github/workflows/tests.yml` workflow runs independent backend and frontend jobs on every
+push and pull request. It also supports manual runs from the repository's Actions tab after the
+workflow is on the default branch. Both jobs use Node 24 and install their own locked dependencies
+with `npm ci`; there is no root npm package.
+
+The frontend job installs Chromium and its Linux dependencies before running the suite, which
+builds and serves the app automatically. Reports, screenshots, and traces are uploaded as the
+`frontend-test-results` artifact and retained for 14 days, including when tests fail.
+No database, deployed services, environment files, or repository secrets are needed. View each
+job's result and logs under Actions → Tests, and download the frontend report from the run's
+Artifacts section.
+
 ## Security notes
 
 - Passwords hashed with bcrypt (72-byte limit enforced); hash is never returned by queries.
