@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import bodyParser from 'body-parser';
+import multer from 'multer';
 import { env } from './config/env.js';
 import authRoutes from './routes/auth.routes.js';
 import entryRoutes from './routes/entries.routes.js';

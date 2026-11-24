@@ -32,6 +32,50 @@ async function request(path, { method = 'GET', body } = {}) {
   return data;
 }
 
+async function multipartRequest(path, { method = 'POST', fields = {}, files = [] }) {
+  const formData = new FormData();
+
+  for (const [name, value] of Object.entries(fields)) {
+    if (Array.isArray(value)) {
+      if (name === 'images') {
+        formData.append(name, JSON.stringify(value));
+      }
+    } else {
+      formData.append(name, value);
+    }
+  }
+
+  for (const file of files) {
+    formData.append('images', file);
+  }
+
+  let res;
+  try {
+    res = await fetch(`${BASE}/api${path}`, {
+      method,
+      credentials: 'include',
+      body: formData,
+    });
+  } catch {
+    throw new ApiError(
+      0,
+      'Could not reach the server. Check your connection and try again.',
+    );
+  }
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new ApiError(
+      res.status,
+      data?.message || 'Something went wrong.',
+      data?.errors || {},
+    );
+  }
+
+  return data;
+}
+
 export const api = {
   register: (username, password) =>
     request('/auth/register', { method: 'POST', body: { username, password } }),
@@ -41,8 +85,17 @@ export const api = {
   me: () => request('/auth/me'),
   entries: () => request('/entries'),
   entry: (id) => request(`/entries/${encodeURIComponent(id)}`),
-  createEntry: (entry) => request('/entries', { method: 'POST', body: entry }),
-  updateEntry: (id, entry) =>
-    request(`/entries/${encodeURIComponent(id)}`, { method: 'PUT', body: entry }),
+  createEntry: (entry, files) =>
+  multipartRequest('/entries', {
+    method: 'POST',
+    fields: entry,
+    files,
+  }),
+updateEntry: (id, entry, files) =>
+  multipartRequest(`/entries/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    fields: entry,
+    files,
+  }),
   deleteEntry: (id) => request(`/entries/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };

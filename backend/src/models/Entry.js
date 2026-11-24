@@ -12,6 +12,10 @@ const entrySchema = new mongoose.Schema(
       maxlength: 100000,
       validate: (value) => value.trim().length > 0,
     },
+    images: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true },
 );
@@ -24,6 +28,7 @@ entrySchema.set('toJSON', {
       title: ret.title,
       date: ret.date,
       content: ret.content,
+      images: ret.images || [],
       createdAt: ret.createdAt,
       updatedAt: ret.updatedAt,
     };

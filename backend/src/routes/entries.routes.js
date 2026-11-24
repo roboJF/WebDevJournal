@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
+import multer from 'multer';
 import {
   listEntries,
   createEntry,
@@ -9,6 +10,7 @@ import {
 } from '../controllers/entries.controller.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
+import { upload } from '../middleware/upload.js';
 
 const router = Router();
 
@@ -42,12 +44,22 @@ const entryRules = [
     .withMessage('Write some content for your entry.')
     .custom((value) => value.length <= 100000)
     .withMessage('Keep your entry within 100,000 characters.'),
+  body('image')
+    .optional()
+    .custom((value) => !value || true)
+    .withMessage('Invalid image file.'),
 ];
 
 router.get('/', listEntries);
 router.get('/:entryId', getEntry);
-router.post('/', entryRules, validate, createEntry);
-router.put('/:entryId', entryRules, validate, updateEntry);
+router.post('/', upload.array('images', 5), entryRules, validate, createEntry);
+router.put(
+  '/:entryId',
+  upload.array('images', 5),
+  entryRules,
+  validate,
+  updateEntry,
+);
 router.delete('/:entryId', deleteEntry);
 
 export default router;

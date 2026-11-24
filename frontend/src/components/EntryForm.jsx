@@ -11,8 +11,20 @@ export default function EntryForm({ initialEntry, onSaved, onCancel }) {
   const editing = !!initialEntry;
   const [form, setForm] = useState(() =>
     initialEntry
-      ? { title: initialEntry.title, date: initialEntry.date, content: initialEntry.content }
-      : { title: '', date: today(), content: '' },
+      ? {
+        title: initialEntry.title,
+        date: initialEntry.date,
+        content: initialEntry.content,
+        images: initialEntry.images || [],
+        newImages: [],
+      }
+    : {
+        title: '',
+        date: today(),
+        content: '',
+        images: [],
+        newImages: [],
+      },
   );
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -29,8 +41,8 @@ export default function EntryForm({ initialEntry, onSaved, onCancel }) {
     setSubmitting(true);
     try {
       const { entry } = editing
-        ? await api.updateEntry(initialEntry.id, form)
-        : await api.createEntry(form);
+        ? await api.updateEntry(initialEntry.id, form, form.newImages)
+        : await api.createEntry(form, form.newImages);
       onSaved(entry);
     } catch (err) {
       setFieldErrors(err.fieldErrors || {});
@@ -39,6 +51,8 @@ export default function EntryForm({ initialEntry, onSaved, onCancel }) {
       setSubmitting(false);
     }
   }
+
+  const submitButtonLabel = submitting ? 'Saving…' : editing ? 'Save changes' : 'Save entry';
 
   return (
     <section className="entry-composer" aria-labelledby="entry-form-heading">
@@ -81,6 +95,43 @@ export default function EntryForm({ initialEntry, onSaved, onCancel }) {
             error={fieldErrors.content}
             maxLength={100000}
             required
+          />
+          {editing && form.images.length > 0 && (
+            <div className="existing-images">
+              <label>Existing images</label>
+
+              {form.images.map((url) => (
+                <div className="existing-image" key={url}>
+                  <img src={url} alt="Journal entry attachment" />
+
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        images: current.images.filter((imageUrl) => imageUrl !== url),
+                      }))
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <Field
+            label="Upload Image"
+            name="image"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                newImages: Array.from(event.target.files),
+              }))
+            }
           />
           <div className="entry-form-actions">
             <button type="submit">

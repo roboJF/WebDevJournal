@@ -11,7 +11,7 @@ const toBool = (value, fallback) =>
   value === undefined || value === '' ? fallback : value.toLowerCase() === 'true';
 
 const toInt = (value, fallback) => {
-  const n = parseInt(value, 10);
+  const n = Number.parseInt(value, 10);
   return Number.isNaN(n) ? fallback : n;
 };
 

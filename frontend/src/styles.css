@@ -323,6 +323,29 @@ a {
   padding: 6px 18px;
 }
 
+.existing-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.existing-images > label {
+  grid-column: 1 / -1;
+  font-weight: 700;
+}
+.existing-image {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+.existing-image img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border: 2px solid;
+  border-color: var(--face-shadow) var(--face-edge) var(--face-edge) var(--face-shadow);
+}
+
 .journal-list {
   display: grid;
   gap: 16px;

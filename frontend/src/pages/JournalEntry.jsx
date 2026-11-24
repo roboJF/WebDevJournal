@@ -38,6 +38,65 @@ export default function JournalEntry({ editing = false }) {
     };
   }, [entryId, user.id, loadAttempt, editing]);
 
+  let entryContent;
+  if (loading) {
+    entryContent = (
+      <p className="loading" role="status">
+        Loading journal entry…
+      </p>
+    );
+  } else if (error) {
+    entryContent = (
+      <div className="alert" role="alert">
+        <p>{error.message}</p>
+        {error.status !== 404 && (
+          <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+            Try again
+          </button>
+        )}
+      </div>
+    );
+  } else if (editing && entry) {
+    entryContent = (
+      <EntryForm
+        key={entry.id}
+        initialEntry={entry}
+        onSaved={(saved) => navigate(`/entries/${saved.id}`, { replace: true })}
+        onCancel={() => navigate(`/entries/${entry.id}`)}
+      />
+    );
+  } else if (entry) {
+    entryContent = (
+      <article className="journal-entry entry-detail" aria-labelledby="entry-heading">
+        <header>
+          <h2 id="entry-heading">{entry.title}</h2>
+          <time className="muted" dateTime={entry.date}>
+            {formatEntryDate(entry.date)}
+          </time>
+          {entry.updatedAt && (
+            <p className="entry-modified muted">
+              Last modified:{' '}
+              <time dateTime={entry.updatedAt}>{formatEntryTimestamp(entry.updatedAt)}</time>
+            </p>
+          )}
+        </header>
+        <p className="entry-content">{entry.content}</p>
+        {entry.images && entry.images.length > 0 && (
+          <div className="entry-images">
+            {entry.images.map((url, index) => (
+              <img
+                key={url}
+                src={url}
+                alt={`Journal entry attachment ${index + 1}`}
+                loading="lazy"
+              />
+            ))}
+          </div>
+        )}
+      </article>
+    );
+  }
+
   return (
     <Window
       title="Muse"
@@ -73,45 +132,7 @@ export default function JournalEntry({ editing = false }) {
             </div>
           )}
         </header>
-        {loading ? (
-          <p className="loading" role="status">
-            Loading journal entry…
-          </p>
-        ) : error ? (
-          <div className="alert" role="alert">
-            <p>{error.message}</p>
-            {error.status !== 404 && (
-              <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
-                Try again
-              </button>
-            )}
-          </div>
-        ) : editing && entry ? (
-          <EntryForm
-            key={entry.id}
-            initialEntry={entry}
-            onSaved={(saved) => navigate(`/entries/${saved.id}`, { replace: true })}
-            onCancel={() => navigate(`/entries/${entry.id}`)}
-          />
-        ) : (
-          entry && (
-            <article className="journal-entry entry-detail" aria-labelledby="entry-heading">
-              <header>
-                <h2 id="entry-heading">{entry.title}</h2>
-                <time className="muted" dateTime={entry.date}>
-                  {formatEntryDate(entry.date)}
-                </time>
-                {entry.updatedAt && (
-                  <p className="entry-modified muted">
-                    Last modified:{' '}
-                    <time dateTime={entry.updatedAt}>{formatEntryTimestamp(entry.updatedAt)}</time>
-                  </p>
-                )}
-              </header>
-              <p className="entry-content">{entry.content}</p>
-            </article>
-          )
-        )}
+        {entryContent}
       </section>
       <footer className="journal-footer">
         Signed in as <strong>{user.username}</strong>.

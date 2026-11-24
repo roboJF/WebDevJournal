@@ -55,7 +55,7 @@ beforeEach(() => {
       null,
   );
   mock.method(Entry, 'findOneAndUpdate', async (query, update, options) => {
-    assert.deepEqual(options, { new: true, runValidators: true });
+    assert.deepEqual(options, { returnDocument: 'after', runValidators: true });
     const index = stored.findIndex(
       (entry) => entry.id === query._id && entry.user.toString() === query.user,
     );
@@ -247,6 +247,31 @@ test('updates the owner’s entry while preserving its ID, owner, and creation d
   assert.equal(stored.length, 1);
   assert.equal(stored[0].user.toString(), owner);
   assert.deepEqual((await (await request({ path: `/${original.id}` })).json()).entry, entry);
+});
+
+test('updating an entry with a removed image list does not retain removed image URLs', async () => {
+  const created = await request({ method: 'POST', body: validEntry });
+  const original = (await created.json()).entry;
+  stored[0].images = [
+    'https://res.cloudinary.com/demo/image/upload/v123/muse/entries/keep.jpg',
+    'https://res.cloudinary.com/demo/image/upload/v123/muse/entries/remove.jpg',
+  ];
+
+  const response = await request({
+    method: 'PUT',
+    path: `/${original.id}`,
+    body: {
+      ...validEntry,
+      images: [
+        'https://res.cloudinary.com/demo/image/upload/v123/muse/entries/keep.jpg',
+      ],
+    },
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(stored[0].images, [
+    'https://res.cloudinary.com/demo/image/upload/v123/muse/entries/keep.jpg',
+  ]);
 });
 
 test('updating another user’s entry or a missing entry returns 404 without changing data', async () => {
