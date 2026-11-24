@@ -6,6 +6,7 @@ import Window from '../components/Window.jsx';
 import EntryForm from '../components/EntryForm.jsx';
 import DeleteEntryDialog from '../components/DeleteEntryDialog.jsx';
 import { formatEntryDate, formatEntryTimestamp } from '../utils/entries.js';
+import useUnsavedChanges from '../hooks/useUnsavedChanges.jsx';
 
 export default function JournalEntry({ editing = false }) {
   const { entryId } = useParams();
@@ -16,6 +17,7 @@ export default function JournalEntry({ editing = false }) {
   const [error, setError] = useState(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const unsaved = useUnsavedChanges();
 
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +104,7 @@ export default function JournalEntry({ editing = false }) {
       title="Muse"
       className="journal-window"
       actions={
-        <button className="titlebar-btn" onClick={logout}>
+        <button className="titlebar-btn" onClick={() => unsaved.requestLeave(logout)}>
           Log out
         </button>
       }
@@ -132,11 +134,54 @@ export default function JournalEntry({ editing = false }) {
             </div>
           )}
         </header>
-        {entryContent}
+        {loading ? (
+          <p className="loading" role="status">
+            Loading journal entry…
+          </p>
+        ) : error ? (
+          <div className="alert" role="alert">
+            <p>{error.message}</p>
+            {error.status !== 404 && (
+              <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+                Try again
+              </button>
+            )}
+          </div>
+        ) : editing && entry ? (
+          <EntryForm
+            key={entry.id}
+            initialEntry={entry}
+            onDirtyChange={unsaved.setDirty}
+            onSaved={(saved) => {
+              unsaved.markClean();
+              navigate(`/entries/${saved.id}`, { replace: true });
+            }}
+            onCancel={() => navigate(`/entries/${entry.id}`)}
+          />
+        ) : (
+          entry && (
+            <article className="journal-entry entry-detail" aria-labelledby="entry-heading">
+              <header>
+                <h2 id="entry-heading">{entry.title}</h2>
+                <time className="muted" dateTime={entry.date}>
+                  {formatEntryDate(entry.date)}
+                </time>
+                {entry.updatedAt && (
+                  <p className="entry-modified muted">
+                    Last modified:{' '}
+                    <time dateTime={entry.updatedAt}>{formatEntryTimestamp(entry.updatedAt)}</time>
+                  </p>
+                )}
+              </header>
+              <p className="entry-content">{entry.content}</p>
+            </article>
+          )
+        )}
       </section>
       <footer className="journal-footer">
         Signed in as <strong>{user.username}</strong>.
       </footer>
+      {unsaved.confirmation}
       {deleteTarget && (
         <DeleteEntryDialog
           entry={deleteTarget.entry}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client.js';
 import Field from './Field.jsx';
 
@@ -7,9 +7,9 @@ function today() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
-export default function EntryForm({ initialEntry, onSaved, onCancel }) {
+export default function EntryForm({ initialEntry, onSaved, onCancel, onDirtyChange }) {
   const editing = !!initialEntry;
-  const [form, setForm] = useState(() =>
+  const [initialForm] = useState(() =>
     initialEntry
       ? {
         title: initialEntry.title,
@@ -26,12 +26,27 @@ export default function EntryForm({ initialEntry, onSaved, onCancel }) {
         newImages: [],
       },
   );
+  const [form, setForm] = useState(initialForm);
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const mountedRef = useRef(false);
 
-  const update = (event) =>
-    setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+  useEffect(() => {
+    mountedRef.current = true;
+    onDirtyChange(false);
+    return () => {
+      mountedRef.current = false;
+      onDirtyChange(false);
+    };
+  }, [onDirtyChange]);
+
+  function update(event) {
+    const next = { ...form, [event.target.name]: event.target.value };
+    // Update the guard in the same event so an immediate Back/Cancel sees the latest values.
+    onDirtyChange(Object.keys(initialForm).some((key) => next[key] !== initialForm[key]));
+    setForm(next);
+  }
 
   async function onSubmit(event) {
     event.preventDefault();
@@ -45,10 +60,11 @@ export default function EntryForm({ initialEntry, onSaved, onCancel }) {
         : await api.createEntry(form, form.newImages);
       onSaved(entry);
     } catch (err) {
+      if (!mountedRef.current) return;
       setFieldErrors(err.fieldErrors || {});
       if (!Object.keys(err.fieldErrors || {}).length) setFormError(err.message);
     } finally {
-      setSubmitting(false);
+      if (mountedRef.current) setSubmitting(false);
     }
   }
 

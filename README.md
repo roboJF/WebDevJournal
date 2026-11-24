@@ -120,14 +120,57 @@ Cancel returns to the list without saving.
 The three-dot menu on each preview and the Edit button on the full entry open `/entries/:entryId/edit`.
 The edit form starts with the saved title, date, and content. Saving opens the updated entry;
 Cancel returns to the entry without saving changes. Only the owner can update an entry.
+Leaving a new or edited entry with unsaved title, date, or content changes opens a confirmation
+dialog with Stay and Leave without saving. This covers Cancel, back links, browser navigation
+within the app, and logging out. Refreshing, closing the tab, or leaving the site uses the browser's
+standard unsaved-changes warning when supported. Unchanged forms and successful saves do not warn.
 Delete is available in each preview's three-dot menu and beside Edit on the full entry page.
 A confirmation dialog names the entry and offers Cancel or Delete entry. Deletion permanently
 removes the entry; there is no trash, recovery period, or restore feature. Only the owner can delete it.
 After a successful deletion, an Entry deleted popup appears in the same dialog. Select OK to dismiss
 it and update the list, or return to the list if the entry was deleted from its full page.
 
+## Tests
+
 Run backend route tests with `cd backend` then `npm test`. Tests mock database operations
 and do not connect to your MongoDB instance.
+
+Frontend tests use Playwright to run the actual React UI in Chromium, with isolated mocked API
+responses. They build the frontend, then start and stop a Vite preview server on port 4173. Render, MongoDB, real accounts,
+and environment files are not needed; external network requests from test pages are blocked.
+
+```bash
+cd frontend
+npm install
+npm run test:install  # Once per machine, and again after Playwright browser updates
+npm test
+```
+
+The suite covers login, registration, protected routes, journal previews and full entries,
+creation/editing/deletion, validation and retries, keyboard controls, deletion popups, theme
+preferences, and unsaved-change protection (including browser Back, refresh, and logout).
+Mobile tests emulate an iPhone-sized Chromium browser; they do not replace testing on real Safari.
+
+Use `npm run test:ui` for the interactive runner or `npm run test:report` to view the latest HTML
+report. Failed tests retain a screenshot and trace in `test-results`; generated results and reports
+are gitignored. To run a single file, use `npm test -- tests/unsaved-changes.spec.js`. CI can run
+`npm ci`, `npx playwright install --with-deps chromium`, then `npm test` inside `frontend`.
+For an already installed Chrome or Edge, optionally set `PLAYWRIGHT_CHANNEL=chrome` or `msedge`
+in your shell before running tests. The default uses Playwright's downloaded Chromium.
+
+### GitHub Actions
+
+The `.github/workflows/tests.yml` workflow runs independent backend and frontend jobs on every
+push and pull request. It also supports manual runs from the repository's Actions tab after the
+workflow is on the default branch. Both jobs use Node 24 and install their own locked dependencies
+with `npm ci`; there is no root npm package.
+
+The frontend job installs Chromium and its Linux dependencies before running the suite, which
+builds and serves the app automatically. Reports, screenshots, and traces are uploaded as the
+`frontend-test-results` artifact and retained for 14 days, including when tests fail.
+No database, deployed services, environment files, or repository secrets are needed. View each
+job's result and logs under Actions → Tests, and download the frontend report from the run's
+Artifacts section.
 
 ## Security notes
 
