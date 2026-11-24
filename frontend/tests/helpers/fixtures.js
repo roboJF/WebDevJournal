@@ -5,9 +5,23 @@ export const savedEntry = {
   title: 'A quiet morning',
   date: '2026-10-14',
   content: 'First line.\n\nA second line, with a memory worth keeping.',
+  images: [],
   createdAt: '2026-10-13T12:00:00Z',
   updatedAt: '2026-10-14T01:30:00Z',
 };
+
+async function readRequestBody(request) {
+  const contentType = request.headers()['content-type'];
+  if (!contentType?.startsWith('multipart/form-data;')) return request.postDataJSON();
+
+  const form = await new Response(request.postDataBuffer(), {
+    headers: { 'content-type': contentType },
+  }).formData();
+  // The retained image list is a text field, separate from any files with the same name.
+  const fields = Object.fromEntries([...form].filter(([, value]) => typeof value === 'string'));
+  if (fields.images !== undefined) fields.images = JSON.parse(fields.images);
+  return fields;
+}
 
 export const test = base.extend({
   api: [
@@ -47,7 +61,7 @@ export const test = base.extend({
 
         const method = request.method();
         const path = url.pathname;
-        const body = request.postDataJSON();
+        const body = await readRequestBody(request);
         requests.push({ method, path, body });
         const reply = (status, data) =>
           route.fulfill({

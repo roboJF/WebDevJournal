@@ -57,9 +57,14 @@ test('creation validates required inputs and saves title, date, and multiline co
   await page.getByRole('button', { name: 'Save entry', exact: true }).click();
   await expect(page).toHaveURL('/entries/created-entry');
   await expect(page.getByRole('heading', { name: form.title })).toBeVisible();
-  expect(await page.locator('.entry-content').textContent()).toBe(form.content);
+  const displayedContent = await page.locator('.entry-content').textContent();
+  expect(displayedContent.replaceAll('\r\n', '\n')).toBe(form.content);
   expect(api.calls('POST', '/api/entries')).toHaveLength(1);
-  expect(api.calls('POST', '/api/entries')[0].body).toEqual(form);
+  expect(api.calls('POST', '/api/entries')[0].body).toEqual({
+    ...form,
+    content: form.content.replaceAll('\n', '\r\n'),
+    images: [],
+  });
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
@@ -108,7 +113,11 @@ for (const source of ['menu', 'entry page']) {
       'Last modified: Oct 14, 2026, 2:45 PM',
     );
     expect(api.calls('PUT', '/api/entries/entry-1')).toHaveLength(1);
-    expect(api.calls('PUT', '/api/entries/entry-1')[0].body).toEqual(form);
+    expect(api.calls('PUT', '/api/entries/entry-1')[0].body).toEqual({
+      ...form,
+      content: form.content.replaceAll('\n', '\r\n'),
+      images: [],
+    });
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 }
