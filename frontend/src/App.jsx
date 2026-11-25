@@ -13,6 +13,7 @@ import JournalEntry from './pages/JournalEntry.jsx';
 import NewEntry from './pages/NewEntry.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
+import './utils/crypto.test.js';
 
 // A data router provides navigation blocking, including browser Back/Forward.
 const router = createBrowserRouter(
