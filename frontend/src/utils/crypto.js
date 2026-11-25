@@ -42,13 +42,13 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-export async function encryptData(key, data) {
+export async function encryptData(data, key) {
     const iv = generateIV();
     const encodedData = new TextEncoder().encode(data);
     const encryptedData = await cryptoAPI.subtle.encrypt(
         {
             name: "AES-GCM",
-            iv: iv,
+            iv,
         },
         key,
         encodedData
@@ -58,7 +58,7 @@ export async function encryptData(key, data) {
         version: 1,
         algorithm: "AES-GCM",
         iv: arrayBufferToBase64(iv),
-        data: arrayBufferToBase64(encryptedData)
+        ciphertext: arrayBufferToBase64(encryptedData)
     };
 }
 

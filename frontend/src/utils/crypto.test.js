@@ -1,4 +1,3 @@
-
 import {
   generateEncryptionKey,
   encryptData,
